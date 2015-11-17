@@ -1,8 +1,9 @@
 import logging
+from _Framework.CompoundElement import CompoundElement
 from _Framework.InputControlElement import InputControlElement
 logger = logging.getLogger(__name__)
 
-class InputControlMultiElement(InputControlElement):
+class InputControlMultiElement(CompoundElement, InputControlElement):
 
     def install_connections(self, install_translation, install_mapping, install_forwarding):
         self._send_delayed_messages_task.kill()
