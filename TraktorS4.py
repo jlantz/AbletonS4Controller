@@ -8,6 +8,7 @@ from _Framework.InputControlElement import MIDI_CC_TYPE
 from _Framework.Layer import Layer
 from _Framework.MixerComponent import MixerComponent as BaseMixerComponent
 from _Framework.SliderElement import SliderElement
+from _Framework.TransportComponent import TransportComponent
 from ChannelStripComponent import ChannelStripComponent
 from VUMeterComponent import VUMeterComponent
 
@@ -82,17 +83,17 @@ TRACK_METERS = (
     (3,70),
 )
 
-BROWSE_KNOB = ((4,2),)
-BROWSE_KNOB_PUSH = ((4,3),)
-BROWSE_BUTTON = ((4,9),)
+BROWSE_KNOB = (4,2)
+BROWSE_KNOB_PUSH = (4,3)
+BROWSE_BUTTON = (4,9)
 
-MASTER_LOOP_DRY_WET_KNOB = ((4,4),)
-MASTER_LOOP_SIZE_BUTTON = ((4,5),)
-MASTER_LOOP_UNDO_BUTTON = ((4,6),)
-MASTER_LOOP_REC_BUTTON = ((4,7),)
-MASTER_LOOP_PLAY_BUTTON = ((4,8),)
+MASTER_LOOP_DRY_WET_KNOB = (4,4)
+MASTER_LOOP_SIZE_BUTTON = (4,5)
+MASTER_LOOP_UNDO_BUTTON = (4,6)
+MASTER_LOOP_REC_BUTTON = (4,7)
+MASTER_LOOP_PLAY_BUTTON = (4,8)
 
-CROSSFADER_SLIDER = ((4,10),)
+CROSSFADER_SLIDER = (4,10)
 
 class ChannelStripLayer(Layer):
 
@@ -159,6 +160,9 @@ class TraktorS4(ControlSurface):
     def __init__(self, c_instance=None, *args, **kwargs):
         super(TraktorS4, self).__init__(c_instance=c_instance, *args, **kwargs)
 
+        self.mixer = None
+        self.transport = None
+
         logger.info('TraktorS4: Base ControlSurface.__init__() completed')
         with self.component_guard():
             logger.info('TraktorS4: Initializing 4 track mixer')
@@ -166,40 +170,55 @@ class TraktorS4(ControlSurface):
             logger.info('TraktorS4: Initialization complete!')
 
     def _create_components(self):
+        self._init_transport()
         self._init_mixer()
 
     def _create_mixer(self):
         return S4MixerComponent(
             num_tracks=NUM_TRACKS,
         )
+
+    def _create_transport(self):
+        return TransportComponent()
+
+    def _init_transport(self):
+        self.transport = self._create_transport()
+        self.transport.set_play_button(ButtonElement(True, MIDI_CC_TYPE, MASTER_LOOP_PLAY_BUTTON[0], MASTER_LOOP_PLAY_BUTTON[1]))
+        self.transport.set_stop_button(ButtonElement(True, MIDI_CC_TYPE, MASTER_LOOP_UNDO_BUTTON[0], MASTER_LOOP_UNDO_BUTTON[1]))
+        self.transport.set_record_button(ButtonElement(True, MIDI_CC_TYPE, MASTER_LOOP_REC_BUTTON[0], MASTER_LOOP_REC_BUTTON[1]))
+        self.transport.set_overdub_button(ButtonElement(True, MIDI_CC_TYPE, MASTER_LOOP_SIZE_BUTTON[0], MASTER_LOOP_SIZE_BUTTON[1]))
    
     def _init_mixer(self):
-        self._mixer = self._create_mixer()
+        self.mixer = self._create_mixer()
+        self._set_mixer_crossfader_control()
         self._set_mixer_volume_controls()
         #self._set_mixer_send_controls()
         #self._set_mixer_fx_macro1_controls()
         self._set_mixer_strip_modes()
         self._set_mixer_vu_meter_controls()
 
+    def _set_mixer_crossfader_control(self):
+        self.mixer.set_crossfader_control(SliderElement(MIDI_CC_TYPE, CROSSFADER_SLIDER[0], CROSSFADER_SLIDER[1]))
+
     def _set_mixer_vu_meter_controls(self):
         controls = []
         for strip_id in range(4):
             controls.append(SliderElement(MIDI_CC_TYPE, TRACK_METERS[strip_id][0], TRACK_METERS[strip_id][1]))
         
-        self._mixer.set_vu_meter_controls(controls)
+        self.mixer.set_vu_meter_controls(controls)
 
     def _set_mixer_volume_controls(self):
         controls = []
-        for slider in TRACK_VOLUME_SLIDERS + MASTER_LOOP_DRY_WET_KNOB:
+        for slider in TRACK_VOLUME_SLIDERS + (MASTER_LOOP_DRY_WET_KNOB,):
             controls.append(
                 SliderElement(MIDI_CC_TYPE, slider[0], slider[1])
             )
         
-        self._mixer.set_volume_controls(controls)
+        self.mixer.set_volume_controls(controls)
 
     def _set_mixer_strip_modes(self):
         for strip_index in range(4):
-            strip = self._mixer._channel_strips[strip_index]
+            strip = self.mixer._channel_strips[strip_index]
             sends_layer = ChannelStripLayer(
                 send1_control = SliderElement(MIDI_CC_TYPE, TRACK_EQ_HIGH_KNOBS[strip_index][0], TRACK_EQ_HIGH_KNOBS[strip_index][1]),
                 send2_control = SliderElement(MIDI_CC_TYPE, TRACK_EQ_MID_KNOBS[strip_index][0], TRACK_EQ_MID_KNOBS[strip_index][1]),
@@ -285,12 +304,12 @@ class TraktorS4(ControlSurface):
 
     def _set_mixer_fx_macro1_controls(self):
         for strip_index in range(4):
-            strip = self._mixer._channel_strips[strip_index]
+            strip = self.mixer._channel_strips[strip_index]
             strip.set_fx_macro1_control(SliderElement(MIDI_CC_TYPE, TRACK_FILTER_KNOBS[strip_index][0], TRACK_FILTER_KNOBS[strip_index][1]))
 
     def _set_mixer_send_controls(self):
         for strip_index in range(4):
-            strip = self._mixer._channel_strips[strip_index]
+            strip = self.mixer._channel_strips[strip_index]
             controls = (
                 SliderElement(MIDI_CC_TYPE, TRACK_EQ_HIGH_KNOBS[strip_index][0], TRACK_EQ_HIGH_KNOBS[strip_index][1]),
                 SliderElement(MIDI_CC_TYPE, TRACK_EQ_MID_KNOBS[strip_index][0], TRACK_EQ_MID_KNOBS[strip_index][1]),

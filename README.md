@@ -13,6 +13,8 @@ This mapping is designed to support my specific workflow, though that workflow h
 
 # Features
 
+* Master Loop Play, Undo (Stop), Rec, and Size (Overdub) mapped to Transport
+* Crossfader mapped to Crossfader
 * Tracks 1-4 in song automatically mapped to Channels 3, 1, 2, and 4 respectively
 * Volume slider controls volume
 * VU meters show levels from Tracks 1-4

@@ -29,7 +29,6 @@ class ChannelStripModesComponent(ModesComponent):
         changed = False
         if name != self._get_selected_mode():
             changed = True
-        logger.info('DEBUG: Entering mode %s' % name)
         super(ChannelStripModesComponent, self)._do_enter_mode(name)
         mode = self.get_mode(name)
         #if mode and hasattr(mode, '_component'):
@@ -37,7 +36,6 @@ class ChannelStripModesComponent(ModesComponent):
             #mode._component.update()
 
     def _do_leave_mode(self, name):
-        logger.info('DEBUG: Leaving mode %s' % name)
         super(ChannelStripModesComponent, self)._do_leave_mode(name)
 
 class set_send_control(object):
@@ -185,8 +183,6 @@ class ChannelStripComponent(BaseChannelStripComponent):
         self.update()
 
     def _get_current_mode_index(self):
-        if hasattr(self, '_modes'):
-            logger.info("DEBUG: selected_mode = %s" % self._modes.selected_mode)
         if hasattr(self, '_modes') and self._modes.selected_mode:
             return self._modes._mode_list.index(self._modes.selected_mode)
     

@@ -81,7 +81,7 @@ class VUMeterComponent(ControlSurfaceComponent):
 
     def send_vu_value(self, level):
         if level != None:
-            if level < 1:
+            if level < 0:
                 None
             else:
                 self.slider.send_value(level, True)
